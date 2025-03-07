@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '../hooks/use-toast';
+import { supabase } from '../integrations/supabase/client';
 
 const RSVP = () => {
   const { toast } = useToast();
@@ -20,12 +20,36 @@ const RSVP = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      // Save the form submission to Supabase
+      const { error } = await supabase
+        .from('rsvp_submissions')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            attending: formData.attending,
+            guests: formData.attending === 'yes' ? formData.guests : null,
+            message: formData.message,
+          },
+        ]);
+
+      if (error) {
+        console.error('Error submitting RSVP:', error);
+        toast({
+          title: "Error",
+          description: "There was a problem submitting your RSVP. Please try again.",
+          variant: "destructive",
+          duration: 5000,
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       setIsSubmitting(false);
       setSubmitted(true);
       toast({
@@ -33,7 +57,16 @@ const RSVP = () => {
         description: "Thank you for your response!",
         duration: 5000,
       });
-    }, 1500);
+    } catch (error) {
+      console.error('Error submitting RSVP:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem submitting your RSVP. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+    }
   };
 
   return (

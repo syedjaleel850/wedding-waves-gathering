@@ -30,6 +30,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rsvp_submissions: {
+        Row: {
+          attending: string
+          created_at: string
+          email: string
+          guests: number | null
+          id: string
+          message: string | null
+          name: string
+        }
+        Insert: {
+          attending: string
+          created_at?: string
+          email: string
+          guests?: number | null
+          id?: string
+          message?: string | null
+          name: string
+        }
+        Update: {
+          attending?: string
+          created_at?: string
+          email?: string
+          guests?: number | null
+          id?: string
+          message?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
