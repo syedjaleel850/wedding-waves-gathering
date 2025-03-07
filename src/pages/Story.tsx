@@ -12,23 +12,23 @@ const Story = () => {
   const timelineItems = [
     {
       title: "First Meeting",
-      date: "2023",
-      description: "Our journey began when we first met through mutual friends. It was an instant connection as we discovered our shared values and interests."
+      date: "2024",
+      description: ""
     },
     {
       title: "Growing Closer",
-      date: "2023",
-      description: "As we spent more time together, our bond grew stronger. We realized how well we complement each other, with shared dreams and aspirations."
+      date: "2024",
+      description: ""
     },
     {
       title: "Family Introductions",
       date: "2024",
-      description: "We introduced each other to our families, who were supportive and happy to see the love we share. Their blessings meant the world to us."
+      description: ""
     },
     {
       title: "The Proposal",
       date: "2024",
-      description: "With the blessings of our families, we decided to take our relationship to the next level and commit to spending our lives together."
+      description: ""
     },
     {
       title: "Wedding Planning",
