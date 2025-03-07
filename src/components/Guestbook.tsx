@@ -1,11 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { useToast } from '../hooks/use-toast';
+
 const Guestbook = () => {
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const controls = useAnimation();
   const [ref, inView] = useInView({
     threshold: 0.1,
@@ -16,27 +16,33 @@ const Guestbook = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sample messages - in a real app, these would come from a database
-  const [messages, setMessages] = useState([{
-    id: 1,
-    name: 'Fatima Ahmed',
-    message: 'Congratulations on your beautiful union! May Allah bless your marriage with love, joy, and harmony.',
-    date: '2 days ago'
-  }, {
-    id: 2,
-    name: 'Imran Khan',
-    message: 'Wishing you both a lifetime of happiness together. May your love grow stronger with each passing day!',
-    date: '3 days ago'
-  }, {
-    id: 3,
-    name: 'Aisha Patel',
-    message: 'So happy for both of you! May Allah shower His blessings upon your marriage.',
-    date: '1 week ago'
-  }]);
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      name: 'Fatima Ahmed',
+      message: 'Congratulations on your beautiful union! May Allah bless your marriage with love, joy, and harmony.',
+      date: '2 days ago'
+    },
+    {
+      id: 2,
+      name: 'Imran Khan',
+      message: 'Wishing you both a lifetime of happiness together. May your love grow stronger with each passing day!',
+      date: '3 days ago'
+    },
+    {
+      id: 3,
+      name: 'Aisha Patel',
+      message: 'So happy for both of you! May Allah shower His blessings upon your marriage.',
+      date: '1 week ago'
+    }
+  ]);
+
   useEffect(() => {
     if (inView) {
       controls.start('visible');
     }
   }, [controls, inView]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !message.trim()) {
@@ -67,6 +73,7 @@ const Guestbook = () => {
       });
     }, 1000);
   };
+
   const containerVariants = {
     hidden: {
       opacity: 0
@@ -78,6 +85,7 @@ const Guestbook = () => {
       }
     }
   };
+
   const itemVariants = {
     hidden: {
       opacity: 0,
@@ -93,7 +101,9 @@ const Guestbook = () => {
       }
     }
   };
-  return <section className="py-20">
+
+  return (
+    <section className="py-20">
       <div className="container mx-auto px-4">
         <div className="heading-divider">
           <h2 className="text-2xl font-serif font-medium text-gray-900 sm:text-3xl md:text-4xl">
@@ -139,14 +149,21 @@ const Guestbook = () => {
               Recent Messages
             </h3>
 
-            {messages.length > 0 ? <div className="space-y-4">
-                {messages.map(msg => <motion.div key={msg.id} variants={itemVariants} className="rounded-lg bg-white p-4 shadow-sm">
-                    
-                    
-                  </motion.div>)}
-              </div> : <p className="text-center text-gray-500">
+            {messages.length > 0 ? (
+              <div className="space-y-4">
+                {messages.map(msg => (
+                  <motion.div key={msg.id} variants={itemVariants} className="rounded-lg bg-white p-4 shadow-sm">
+                    <h4 className="font-medium text-gray-900">{msg.name}</h4>
+                    <p className="mt-2 text-gray-600">{msg.message}</p>
+                    <p className="mt-1 text-xs text-gray-400">{msg.date}</p>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-gray-500">
                 Be the first to leave a message!
-              </p>}
+              </p>
+            )}
 
             <div className="mt-4 text-center">
               <a href="/guestbook" className="text-sm font-medium text-lavender-600 hover:text-lavender-800">
@@ -156,6 +173,8 @@ const Guestbook = () => {
           </motion.div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default Guestbook;
