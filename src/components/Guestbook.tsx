@@ -3,6 +3,15 @@ import { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { useToast } from '../hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+// Define the message type
+interface GuestbookMessage {
+  id: string;
+  name: string;
+  message: string;
+  created_at: string;
+}
 
 const Guestbook = () => {
   const { toast } = useToast();
@@ -14,28 +23,61 @@ const Guestbook = () => {
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [messages, setMessages] = useState<GuestbookMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Sample messages - in a real app, these would come from a database
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      name: 'Fatima Ahmed',
-      message: 'Congratulations on your beautiful union! May Allah bless your marriage with love, joy, and harmony.',
-      date: '2 days ago'
-    },
-    {
-      id: 2,
-      name: 'Imran Khan',
-      message: 'Wishing you both a lifetime of happiness together. May your love grow stronger with each passing day!',
-      date: '3 days ago'
-    },
-    {
-      id: 3,
-      name: 'Aisha Patel',
-      message: 'So happy for both of you! May Allah shower His blessings upon your marriage.',
-      date: '1 week ago'
+  // Fetch messages when component mounts
+  useEffect(() => {
+    fetchMessages();
+    
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'guestbook_messages'
+        },
+        (payload) => {
+          const newMessage = payload.new as GuestbookMessage;
+          setMessages(prevMessages => [newMessage, ...prevMessages]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Fetch messages from Supabase
+  const fetchMessages = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('guestbook_messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) {
+        throw error;
+      }
+      
+      setMessages(data || []);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load messages. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
 
   useEffect(() => {
     if (inView) {
@@ -43,7 +85,7 @@ const Guestbook = () => {
     }
   }, [controls, inView]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !message.trim()) {
       toast({
@@ -55,23 +97,52 @@ const Guestbook = () => {
     }
     setIsSubmitting(true);
 
-    // Simulate adding a message
-    setTimeout(() => {
-      const newMessage = {
-        id: messages.length + 1,
-        name,
-        message,
-        date: 'Just now'
-      };
-      setMessages([newMessage, ...messages]);
+    try {
+      // Save message to Supabase
+      const { error } = await supabase
+        .from('guestbook_messages')
+        .insert([{ name, message }]);
+      
+      if (error) {
+        throw error;
+      }
+
       setName('');
       setMessage('');
-      setIsSubmitting(false);
       toast({
         title: "Message Added",
         description: "Thank you for your lovely message!"
       });
-    }, 1000);
+    } catch (error) {
+      console.error('Error saving message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save your message. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    } else if (diffInSeconds < 3600) {
+      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    } else if (diffInSeconds < 86400) {
+      return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    } else if (diffInSeconds < 604800) {
+      return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    } else if (diffInSeconds < 2592000) {
+      return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
   };
 
   const containerVariants = {
@@ -149,13 +220,17 @@ const Guestbook = () => {
               Recent Messages
             </h3>
 
-            {messages.length > 0 ? (
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-lavender-200 border-t-lavender-600"></div>
+              </div>
+            ) : messages.length > 0 ? (
               <div className="space-y-4">
                 {messages.map(msg => (
                   <motion.div key={msg.id} variants={itemVariants} className="rounded-lg bg-white p-4 shadow-sm">
                     <h4 className="font-medium text-gray-900">{msg.name}</h4>
                     <p className="mt-2 text-gray-600">{msg.message}</p>
-                    <p className="mt-1 text-xs text-gray-400">{msg.date}</p>
+                    <p className="mt-1 text-xs text-gray-400">{formatDate(msg.created_at)}</p>
                   </motion.div>
                 ))}
               </div>
